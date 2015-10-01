@@ -30,25 +30,25 @@ namespace QMoreOptions
     // You can use as many files and subfolders as you wish to organise your code, as long
     // as it remains located under the Source folder.
 
-	public class MoreOptionsMod :LoadingExtensionBase
-	{
-		public GameObject optionsWindowGo; 
-		public override void OnLevelLoaded(LoadMode mode)
-		{
-			optionsWindowGo = new GameObject();
-			optionsWindowGo.AddComponent<OptionsWindow>();
-		}
-		public override void OnLevelUnloading()
-		{
-			try
-			{
-				OptionsWindow optionsWindow = optionsWindowGo.GetComponent<OptionsWindow>();
-				optionsWindow.Destroy();
-			}
-			catch(Exception e)
-			{
-				
-			}
-		}
-	}
+    public class MoreOptionsMod :LoadingExtensionBase
+    {
+        public GameObject optionsWindowGo; 
+        public override void OnLevelLoaded(LoadMode mode)
+        {
+            optionsWindowGo = new GameObject();
+            optionsWindowGo.AddComponent<OptionsWindow>();
+        }
+        public override void OnLevelUnloading()
+        {
+            try
+            {
+                OptionsWindow optionsWindow = optionsWindowGo.GetComponent<OptionsWindow>();
+                optionsWindow.Destroy();
+            }
+            catch(Exception e)
+            {
+                
+            }
+        }
+    }
 }

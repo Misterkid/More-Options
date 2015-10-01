@@ -81,68 +81,68 @@ public static class EUtils
         string retText = "<color=" + htmlHex + ">" + text + "</color>";
         return retText;
     }
-	
-	public static object GetFieldValue(MonoBehaviour monoObject, string fieldName)
-	{
-		try
-		{
-			BindingFlags bindingFlags = BindingFlags.Public |
-					BindingFlags.NonPublic |
-					BindingFlags.Instance |
-					BindingFlags.Static;
-					
-			FieldInfo fieldInfo = monoObject.GetType().GetField(fieldName,bindingFlags);
-			//fieldInfo.SetValue(monoObject,value);
-			return fieldInfo.GetValue(monoObject);
-			//return true;
-		}
-		catch(Exception e)
-		{
-			ChirpLog.Error( "Unable to get Value: " + monoObject.GetType().Name + ":" + fieldName + ":" + e.Message);
-			ChirpLog.Flush();
-			return 0;
-		}
-		
-	}
-	public static object CallMethod(MonoBehaviour monoObject, string methodName, object[] value = null)
-	{
-		object returnValue = null;
-		try
-		{
-			MethodInfo[] methods = monoObject.GetType().GetMethods();
-			foreach (MethodInfo info in methods)
-			{
-				if (info.Name == methodName)
-				{
-					returnValue = info.Invoke(monoObject, value); // [2]
-				}
-			}
-			return returnValue;
-		}
-		catch(Exception e)
-		{
-			ChirpLog.Error("Unable to Call Method: " + monoObject.GetType().Name + ":" + methodName + ":" + e.Message);
-			ChirpLog.Flush();
-			return returnValue;
-		}
-		
-	}
-	public static void SetFieldValue(MonoBehaviour monoObject, string fieldName, object value)
-	{
-		try
-		{
-			BindingFlags bindingFlags = BindingFlags.Public |
-					BindingFlags.NonPublic |
-					BindingFlags.Instance |
-					BindingFlags.Static;
-					
-			FieldInfo fieldInfo = monoObject.GetType().GetField(fieldName,bindingFlags);
-			fieldInfo.SetValue(monoObject,value);
-		}
-		catch(Exception e)
-		{
-			ChirpLog.Error("Unable to set value:" + monoObject.GetType().Name + ":" + fieldName + ":" + e.Message);
-			ChirpLog.Flush();
-		}
-	}
+    
+    public static object GetFieldValue(MonoBehaviour monoObject, string fieldName)
+    {
+        try
+        {
+            BindingFlags bindingFlags = BindingFlags.Public |
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance |
+                    BindingFlags.Static;
+                    
+            FieldInfo fieldInfo = monoObject.GetType().GetField(fieldName,bindingFlags);
+            //fieldInfo.SetValue(monoObject,value);
+            return fieldInfo.GetValue(monoObject);
+            //return true;
+        }
+        catch(Exception e)
+        {
+            ChirpLog.Error( "Unable to get Value: " + monoObject.GetType().Name + ":" + fieldName + ":" + e.Message);
+            ChirpLog.Flush();
+            return 0;
+        }
+        
+    }
+    public static object CallMethod(MonoBehaviour monoObject, string methodName, object[] value = null)
+    {
+        object returnValue = null;
+        try
+        {
+            MethodInfo[] methods = monoObject.GetType().GetMethods();
+            foreach (MethodInfo info in methods)
+            {
+                if (info.Name == methodName)
+                {
+                    returnValue = info.Invoke(monoObject, value); // [2]
+                }
+            }
+            return returnValue;
+        }
+        catch(Exception e)
+        {
+            ChirpLog.Error("Unable to Call Method: " + monoObject.GetType().Name + ":" + methodName + ":" + e.Message);
+            ChirpLog.Flush();
+            return returnValue;
+        }
+        
+    }
+    public static void SetFieldValue(MonoBehaviour monoObject, string fieldName, object value)
+    {
+        try
+        {
+            BindingFlags bindingFlags = BindingFlags.Public |
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance |
+                    BindingFlags.Static;
+                    
+            FieldInfo fieldInfo = monoObject.GetType().GetField(fieldName,bindingFlags);
+            fieldInfo.SetValue(monoObject,value);
+        }
+        catch(Exception e)
+        {
+            ChirpLog.Error("Unable to set value:" + monoObject.GetType().Name + ":" + fieldName + ":" + e.Message);
+            ChirpLog.Flush();
+        }
+    }
 }
