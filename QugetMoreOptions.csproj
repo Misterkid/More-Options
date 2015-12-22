@@ -32,19 +32,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="ColossalManaged">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ColossalManaged.dll</HintPath>
-    </Reference>
-    <Reference Include="ICities">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ICities.dll</HintPath>
-    </Reference>
+    <Reference Include="Assembly-CSharp" />
+    <Reference Include="ColossalManaged" />
+    <Reference Include="ICities" />
     <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Games\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
+    <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Source\ChirpLogger\ChirpLogger.cs" />

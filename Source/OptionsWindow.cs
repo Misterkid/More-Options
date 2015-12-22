@@ -5,6 +5,9 @@ using System.Timers;
 using ChirpLogger;
 using QugetFileSystem;
 using System;
+using System.CodeDom;
+using System.Linq;
+
 /* 
  * Author: Eduard Meivogel
  * Website: https://www.facebook.com/EddyMeivogelProjects
@@ -35,8 +38,8 @@ public class OptionsWindow : MonoBehaviour
     private float maxPixelLightCount = 4;
     //Shadows
     private ShadowProjection shadowProjection;
-    private float shadowDistance = 0;
-    private float maxShadowDistance = 250;
+    private float maxShadowDistance = 0;
+    private float shadowDistanceLimit = 20000;
     private float shadowCascade = 0;
     private float maxShadowCascade = 4;
     //Other
@@ -242,7 +245,7 @@ public class OptionsWindow : MonoBehaviour
             {
                 shadowProjection = ShadowProjection.StableFit;
             }
-            shadowDistance = Load(saveTag + GetName (new { shadowDistance }));
+            maxShadowDistance = Load(saveTag + GetName (new { shadowDistance = maxShadowDistance }));
             shadowCascade = Load(saveTag + GetName (new { shadowCascade }));
             //Other
             vSync = Load(saveTag + GetName (new { vSync }));
@@ -275,7 +278,7 @@ public class OptionsWindow : MonoBehaviour
             //Shadow
             QualitySettings.shadowProjection = shadowProjection;
             
-            QualitySettings.shadowDistance = shadowDistance;
+            QualitySettings.shadowDistance = maxShadowDistance;
             QualitySettings.shadowCascades = (int)shadowCascade;
             //Other
             QualitySettings.vSyncCount = (int)vSync;
@@ -308,7 +311,7 @@ public class OptionsWindow : MonoBehaviour
         pixelLightCount = QualitySettings.pixelLightCount;
         //Shadow
         shadowProjection = QualitySettings.shadowProjection;
-        shadowDistance = QualitySettings.shadowDistance;
+        maxShadowDistance = QualitySettings.shadowDistance;
         shadowCascade = QualitySettings.shadowCascades;
         //Other
         vSync = QualitySettings.vSyncCount;
@@ -362,7 +365,7 @@ public class OptionsWindow : MonoBehaviour
         }
         Save(saveTag + GetName (new { shadowProjection }),shadowProjFloat);
         
-        Save(saveTag + GetName (new { shadowDistance }),shadowDistance);
+        Save(saveTag + GetName (new { shadowDistance = maxShadowDistance }),maxShadowDistance);
         Save(saveTag + GetName (new { shadowCascade }),shadowCascade);
         Save(saveTag + GetName (new { vSync }),vSync);
         Save(saveTag + GetName (new { particleRaycastBudget }),particleRaycastBudget);
@@ -395,11 +398,13 @@ public class OptionsWindow : MonoBehaviour
     }
     private float Load(string key)
     {
-        if(qData.GetValueByKey(key) == null)
+        var value = qData.GetValueByKey(key);
+        if(!(value is float))
             return -1;
         else
-            return (float)qData.GetValueByKey(key);
+            return (float)value;
     }
+
     MonoBehaviour GetCameraBehaviour(string name)
     {
         for( int i = 0; i < cameraBehaviours.Length; i++ )
@@ -475,7 +480,7 @@ public class OptionsWindow : MonoBehaviour
         }
         yPos = yPos + sWidthHeight.y;
         
-        yPos = ResolutionGroup(0, yPos);
+        //yPos = ResolutionGroup(0, yPos);
         yPos = RenderingGroup(0, yPos);
         yPos = ShadowGroup(0, yPos);
         yPos = OtherGroup(0, yPos);
@@ -492,29 +497,29 @@ public class OptionsWindow : MonoBehaviour
         GUI.EndScrollView();
         GUI.DragWindow();
     }
-    float ResolutionGroup(float xStart, float yStart)
-    {
-        float xPos = xStart + 25;
-        float yPos = yStart + 25;
-        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Resolutions", headingColor));
-        yPos = yPos + sWidthHeight.y;
-        fullScreen = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), fullScreen, "Full screen");
-        yPos = yPos + sWidthHeight.y;
-        float maxHeight = yPos + (Mathf.Floor(Screen.resolutions.Length / 3) * (sWidthHeight.y));
-        Resolution[] resolutions = Screen.resolutions;
-        for (int i = 0; i < resolutions.Length; i++)
-        {
-            float newXPos = xPos + (i % 3) * (bWidthHeight.x);
-            float newYPos = yPos + (Mathf.Floor(i / 3) * (bWidthHeight.y));
-            if (GUI.Button(new Rect(newXPos, newYPos, bWidthHeight.x, bWidthHeight.y), resolutions[i].width + "x" + resolutions[i].height + " " + resolutions[i].refreshRate))
-            {
-                Screen.SetResolution(resolutions[i].width, resolutions[i].height, fullScreen, resolutions[i].refreshRate);
-                optionWindowRect.x = 0;
-                optionWindowRect.y = 0;
-            }
-        }
-        return maxHeight;
-    }
+//    float ResolutionGroup(float xStart, float yStart)
+//    {
+//        float xPos = xStart + 25;
+//        float yPos = yStart + 25;
+//        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Resolutions", headingColor));
+//        yPos = yPos + sWidthHeight.y;
+//        fullScreen = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), fullScreen, "Full screen");
+//        yPos = yPos + sWidthHeight.y;
+//        float maxHeight = yPos + (Mathf.Floor(Screen.resolutions.Length / 3) * (sWidthHeight.y));
+//        Resolution[] resolutions = Screen.resolutions;
+//        for (int i = 0; i < resolutions.Length; i++)
+//        {
+//            float newXPos = xPos + (i % 3) * (bWidthHeight.x);
+//            float newYPos = yPos + (Mathf.Floor(i / 3) * (bWidthHeight.y));
+//            if (GUI.Button(new Rect(newXPos, newYPos, bWidthHeight.x, bWidthHeight.y), resolutions[i].width + "x" + resolutions[i].height + " " + resolutions[i].refreshRate))
+//            {
+//                Screen.SetResolution(resolutions[i].width, resolutions[i].height, fullScreen, resolutions[i].refreshRate);
+//                optionWindowRect.x = 0;
+//                optionWindowRect.y = 0;
+//            }
+//        }
+//        return maxHeight;
+//    }
     float RenderingGroup(float xStart,float yStart)
     {
         float xPos = xStart + 25;
@@ -594,11 +599,12 @@ public class OptionsWindow : MonoBehaviour
         }
         QualitySettings.shadowProjection = shadowProjection;
         yPos = yPos + bWidthHeight.y;
-        
-        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Shadow Distance(Doesn't Work): " + QualitySettings.shadowDistance);
-        shadowDistance = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), shadowDistance, 0, maxShadowDistance);
-        QualitySettings.shadowDistance = shadowDistance;
-        Save(saveTag + GetName (new { shadowDistance }),shadowDistance);
+
+        var cameraController = GameObject.FindObjectsOfType<CameraController>().First();
+        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Max Shadow Distance: " + cameraController.m_maxShadowDistance);
+        maxShadowDistance = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), maxShadowDistance, 0, shadowDistanceLimit);
+        cameraController.m_maxShadowDistance = maxShadowDistance;
+        Save(saveTag + GetName (new { shadowDistance = maxShadowDistance }),maxShadowDistance);
         yPos = yPos + sWidthHeight.y;
         
         GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Shadow Cascade: " + QualitySettings.shadowCascades);
