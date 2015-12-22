@@ -41,6 +41,8 @@
   <ItemGroup>
     <Compile Include="ChirpLogger\ChirpLogger.cs" />
     <Compile Include="ChirpLogger\ChirpLogger.Internal\Chirp.cs" />
+    <Compile Include="Configuration.cs" />
+    <Compile Include="Constants\FogClassicConstants.cs" />
     <Compile Include="EUtils.cs" />
     <Compile Include="LoadingExtension.cs" />
     <Compile Include="OptionsWindow.cs" />

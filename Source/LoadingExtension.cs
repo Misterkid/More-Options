@@ -5,7 +5,7 @@ namespace QMoreOptions
 {
     public class LoadingExtension : LoadingExtensionBase
     {
-        private static readonly string GameObjectName = "MoreOptionsOptionsWindow";
+        private const string GameObjectName = "MoreOptionsOptionsWindow";
 
         public override void OnLevelLoaded(LoadMode mode)
         {
@@ -17,10 +17,11 @@ namespace QMoreOptions
         public override void OnLevelUnloading()
         {
             var optionsWindowGo = GameObject.Find(GameObjectName);
-            if (optionsWindowGo != null)
+            if (optionsWindowGo == null)
             {
-                GameObject.Destroy(optionsWindowGo);
+                return;
             }
+            Object.Destroy(optionsWindowGo);
         }
     }
 }

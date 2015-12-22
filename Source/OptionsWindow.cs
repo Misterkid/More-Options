@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
+using QMoreOptions.Constants;
 using QMoreOptions.QugetFileSystem;
 using UnityEngine;
 
@@ -13,12 +15,12 @@ using UnityEngine;
  */
 namespace QMoreOptions
 {
-    public class OptionsWindow : MonoBehaviour 
+    public class OptionsWindow : MonoBehaviour
     {
         //public bool activated = false;
         public Vector2 sWidthHeight = new Vector2(250, 25);
         public Vector2 bWidthHeight = new Vector2(100, 25);
-        public Rect optionWindowRect = new Rect(0,0, 550, 550);
+        public Rect optionWindowRect = new Rect(0, 0, 550, 550);
         public Color32 headingColor = new Color32(255, 255, 255, 255);
         private Vector2 optionScrollPosition = Vector2.zero;
         public bool activated = false;
@@ -43,13 +45,13 @@ namespace QMoreOptions
         //Other
         private float vSync = 0;
         private float maxvSync = 2;
-    
+
         private float LoDLevel = 0;
         private float LoDLevelMax = 10;
-    
+
         private float LoDBias = 0;
         private float LoDBiasMax = 10;
-    
+
         private float particleRaycastBudget = 0;
         private float maxParticleRaycastBudget = 4096;
 
@@ -66,27 +68,12 @@ namespace QMoreOptions
         private List<string> cameraEffects = new List<string>();
         private bool killSeagull = false;
         /* Render Properties */
-        private MonoBehaviour renderProperties;
-        /* Fog Related */
-        private float m_fogHeight = 0;
-        private float m_fogHeightMax = 10000;
-    
-        private float m_edgeFogDistance = 0;
-        private float m_edgeFogDistanceMax = 10000;
-    
-        private bool m_useVolumeFog = true;
-    
-        private float m_volumeFogDensity = 0;
-        private float m_volumeFogDensityMax = 1;
-    
-        private float m_volumeFogStart = 0;
-        private float m_volumeFogStartMax = 4000;
-    
-        private float m_volumeFogDistance = 0;
-        private float m_volumeFogDistanceMax = 8000;
-        private float m_pollutionFogIntensity = 0;
-        private float m_pollutionFogIntensityMax = 1;
-    
+
+        private RenderProperties renderProperties;
+        private DayNightCloudsProperties dayNightCloudsProperties;
+        private FogProperties fogProperties;
+        private DayNightProperties dayNightProperties;
+
         private string saveTag = "QGT_SCL_";
         private QData qData;
         private string filePath;
@@ -117,7 +104,7 @@ namespace QMoreOptions
         //private bool useButtons;
         //private bool useCollision;
         // Use this for initialization
-        void Start () 
+        void Start()
         {
             //Resolution
             fullScreen = Screen.fullScreen;
@@ -146,13 +133,30 @@ namespace QMoreOptions
             optionWindowRect = new Rect((Screen.width / 2) - (optionWindowRect.width / 2), (Screen.height / 2) - (optionWindowRect.height / 2), optionWindowRect.width, optionWindowRect.height);
             cameraBehaviours = Camera.main.GetComponents<MonoBehaviour>() as MonoBehaviour[];
             //Get MonoBehaviours here.
-            MonoBehaviour[] behaviours = GameObject.FindObjectsOfType<MonoBehaviour>() as MonoBehaviour[];
-            for( int i = 0; i < behaviours.Length; i++ )
+            foreach (var t in FindObjectsOfType<MonoBehaviour>())
             {
-                if(behaviours[i].GetType().Name == "RenderProperties" )
-                    renderProperties = behaviours[i];
+                var properties = t as RenderProperties;
+                if (properties != null)
+                {
+                    this.renderProperties = properties;
+                }
+                var properties1 = t as DayNightProperties;
+                if (properties1 != null)
+                {
+                    this.dayNightProperties = properties1;
+                }
+                var properties2 = t as DayNightCloudsProperties;
+                if (properties2 != null)
+                {
+                    this.dayNightCloudsProperties = properties2;
+                }
+                var properties3 = t as FogProperties;
+                if (properties3 != null)
+                {
+                    this.fogProperties = properties3;
+                }
             }
-        
+
             //m_fogHeight = (float)EUtils.GetFieldValue(renderProperties,"m_fogHeight");
             /*
         m_fogHeight = (float)EUtils.GetFieldValue(renderProperties,"m_fogHeight");
@@ -184,7 +188,7 @@ namespace QMoreOptions
         m_3DNoiseStepSize = (float)EUtils.GetFieldValue(GetCameraBehaviour("FogEffect"),"m_3DNoiseStepSize"); 
         m_3DNoiseScale = (float)EUtils.GetFieldValue(GetCameraBehaviour("FogEffect"),"m_3DNoiseScale"); 
         */
-        
+
             //Added Effects
             /*
         sSAOC = Camera.main.gameObject.AddComponent<ScreenSpaceAmbientOcclusion>();
@@ -196,29 +200,29 @@ namespace QMoreOptions
         sSAOB.enabled = false;
         edgeDetection.enabled = false;
         creaseShading.enabled = false;*/
-        
-        
+
+
             //QugetFileLoader Alpha.
             filePath = Application.persistentDataPath + "\\qMoreOptionsConfig.qgt";
             QLoader qLoader = new QLoader(filePath);
             qData = qLoader.qData;
-            if(qData == null)
+            if (qData == null)
                 qData = new QData();
-        
-            if(qData.GetValueByKey("DONT_REMOVE_THIS") == null)
+
+            if (qData.GetValueByKey("DONT_REMOVE_THIS") == null)
             {
                 //OVERRIDE
-                qData.AddToValues("DONT_REMOVE_THIS","ELSE_IT_RESETS!");
+                qData.AddToValues("DONT_REMOVE_THIS", "ELSE_IT_RESETS!");
                 ResetToDefault();
             }
             else
             {
-            
+
                 //Default
-                antiAliasing = Load(saveTag + GetName (new { antiAliasing }));
+                antiAliasing = Load(saveTag + GetName(new { antiAliasing }));
                 //anisotropicFilt = Load(saveTag + GetName (new { anisotropicFilt }));
-                float anisoFloat = Load(saveTag + GetName (new { anisotropicFilt }));
-                if (anisoFloat ==0)
+                float anisoFloat = Load(saveTag + GetName(new { anisotropicFilt }));
+                if (anisoFloat == 0)
                 {
                     anisotropicFilt = AnisotropicFiltering.Disable;
                 }
@@ -230,11 +234,11 @@ namespace QMoreOptions
                 {
                     anisotropicFilt = AnisotropicFiltering.ForceEnable;
                 }
-            
-                textureQuality = Load(saveTag + GetName (new { textureQuality }));
-                pixelLightCount = Load(saveTag + GetName (new { pixelLightCount }));
+
+                textureQuality = Load(saveTag + GetName(new { textureQuality }));
+                pixelLightCount = Load(saveTag + GetName(new { pixelLightCount }));
                 //Shadow
-                float shadowProjFloat  = Load(saveTag + GetName (new { shadowProjection }));
+                float shadowProjFloat = Load(saveTag + GetName(new { shadowProjection }));
                 if (shadowProjFloat == 0)
                 {
                     shadowProjection = ShadowProjection.CloseFit;
@@ -243,31 +247,16 @@ namespace QMoreOptions
                 {
                     shadowProjection = ShadowProjection.StableFit;
                 }
-                maxShadowDistance = Load(saveTag + GetName (new { shadowDistance = maxShadowDistance }));
-                shadowCascade = Load(saveTag + GetName (new { shadowCascade }));
+                maxShadowDistance = Load(saveTag + GetName(new { shadowDistance = maxShadowDistance }));
+                shadowCascade = Load(saveTag + GetName(new { shadowCascade }));
                 //Other
-                vSync = Load(saveTag + GetName (new { vSync }));
-                particleRaycastBudget = Load(saveTag + GetName (new { particleRaycastBudget }));
-                frameRate = Load(saveTag + GetName (new { frameRate }));
-            
-                LoDLevel = Load(saveTag + GetName (new { LoDLevel }));
-                LoDBias = Load(saveTag + GetName (new { LoDBias }));
-            
-                //Fog
-                m_fogHeight = Load(saveTag + GetName (new { m_fogHeight }));
-                m_edgeFogDistance = Load(saveTag + GetName (new { m_edgeFogDistance }));
-            
-                float convertToBool = Load(saveTag + GetName (new { m_useVolumeFog }));
-                if(convertToBool == 0)
-                    m_useVolumeFog = false;
-                else
-                    m_useVolumeFog = true;
-            
-                m_volumeFogDensity = Load(saveTag + GetName (new { m_volumeFogDensity }));
-                m_volumeFogStart = Load(saveTag + GetName (new { m_volumeFogStart }));
-                m_volumeFogDistance = Load(saveTag + GetName (new { m_volumeFogDistance }));
-                m_pollutionFogIntensity = Load(saveTag + GetName (new { m_pollutionFogIntensity }));
-            
+                vSync = Load(saveTag + GetName(new { vSync }));
+                particleRaycastBudget = Load(saveTag + GetName(new { particleRaycastBudget }));
+                frameRate = Load(saveTag + GetName(new { frameRate }));
+
+                LoDLevel = Load(saveTag + GetName(new { LoDLevel }));
+                LoDBias = Load(saveTag + GetName(new { LoDBias }));
+
                 //Update
                 QualitySettings.antiAliasing = (int)antiAliasing;
                 QualitySettings.anisotropicFiltering = anisotropicFilt;
@@ -275,7 +264,7 @@ namespace QMoreOptions
                 QualitySettings.pixelLightCount = (int)pixelLightCount;
                 //Shadow
                 QualitySettings.shadowProjection = shadowProjection;
-            
+
                 QualitySettings.shadowDistance = maxShadowDistance;
                 QualitySettings.shadowCascades = (int)shadowCascade;
                 //Other
@@ -286,17 +275,35 @@ namespace QMoreOptions
                 QualitySettings.maximumLODLevel = (int)LoDLevel;
                 QualitySettings.lodBias = LoDBias;
                 //Fog
-                EUtils.SetFieldValue(renderProperties,"m_fogHeight",m_fogHeight);
-                EUtils.SetFieldValue(renderProperties,"m_edgeFogDistance",m_edgeFogDistance);
-                EUtils.SetFieldValue(renderProperties,"m_useVolumeFog",m_useVolumeFog);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogDensity",m_volumeFogDensity);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogStart",m_volumeFogStart);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogDistance",m_volumeFogDistance);	
-                EUtils.SetFieldValue(renderProperties,"m_pollutionFogIntensity",m_pollutionFogIntensity);	
+                BackupFogClassicOptions();
+                Configuration.instance.fogClassic = Configuration.defaults.fogClassic;
+                SetFogClassicOptions();
             }
         }
-    
-        private string GetName<T>(T item) where T : class 
+
+        private void BackupFogClassicOptions()
+        {
+            Configuration.defaults.fogClassic.fogHeight = renderProperties.m_fogHeight;
+            Configuration.defaults.fogClassic.edgeFogDistance = renderProperties.m_edgeFogDistance;
+            Configuration.defaults.fogClassic.useVolumeFog = renderProperties.m_useVolumeFog;
+            Configuration.defaults.fogClassic.volumeFogDensity = renderProperties.m_volumeFogDensity;
+            Configuration.defaults.fogClassic.volumeFogStart = renderProperties.m_volumeFogStart;
+            Configuration.defaults.fogClassic.volumeFogDistance = renderProperties.m_volumeFogDistance;
+            Configuration.defaults.fogClassic.pollutionFogIntensity = renderProperties.m_pollutionFogIntensity;
+        }
+
+        private void SetFogClassicOptions()
+        {
+            renderProperties.m_fogHeight = Configuration.instance.fogClassic.fogHeight;
+            renderProperties.m_edgeFogDistance = Configuration.instance.fogClassic.edgeFogDistance;
+            renderProperties.m_useVolumeFog = Configuration.instance.fogClassic.useVolumeFog;
+            renderProperties.m_volumeFogDensity = Configuration.instance.fogClassic.volumeFogDensity;
+            renderProperties.m_volumeFogStart = Configuration.instance.fogClassic.volumeFogStart;
+            renderProperties.m_volumeFogDistance = Configuration.instance.fogClassic.volumeFogDistance;
+            renderProperties.m_pollutionFogIntensity = Configuration.instance.fogClassic.pollutionFogIntensity;
+        }
+
+        private string GetName<T>(T item) where T : class
         {
             return typeof(T).GetProperties()[0].Name;
         }
@@ -315,25 +322,20 @@ namespace QMoreOptions
             vSync = QualitySettings.vSyncCount;
             particleRaycastBudget = QualitySettings.particleRaycastBudget;
             frameRate = Application.targetFrameRate;
-        
+
             LoDLevel = QualitySettings.maximumLODLevel;
             LoDBias = QualitySettings.lodBias;
             //fog
-            m_fogHeight = 5000;
-            m_edgeFogDistance = 0;
-            m_useVolumeFog = true;
-            m_volumeFogDensity = 0.0002f;
-            m_volumeFogStart = 1711f;
-            m_volumeFogDistance = 2903f;
-            m_pollutionFogIntensity = 0.48f;
-        
-        
-            qData.AddToValues("DONT_REMOVE_THIS","ELSE_IT_RESETS!");
-        
-        
+            Configuration.instance.fogClassic = Configuration.defaults.fogClassic;
+            Configuration.Save();
+            SetFogClassicOptions();
+
+            qData.AddToValues("DONT_REMOVE_THIS", "ELSE_IT_RESETS!");
+
+
             //Save
-            Save(saveTag + GetName (new { antiAliasing }),antiAliasing);
-        
+            Save(saveTag + GetName(new { antiAliasing }), antiAliasing);
+
             float anisoFloat = -1;
             if (anisotropicFilt == AnisotropicFiltering.Disable)
             {
@@ -347,11 +349,11 @@ namespace QMoreOptions
             {
                 anisoFloat = 2;
             }
-            Save(saveTag + GetName (new { anisotropicFilt }),anisoFloat);
-        
-            Save(saveTag + GetName (new { textureQuality }),textureQuality);
-            Save(saveTag + GetName (new { pixelLightCount }),pixelLightCount);
-        
+            Save(saveTag + GetName(new { anisotropicFilt }), anisoFloat);
+
+            Save(saveTag + GetName(new { textureQuality }), textureQuality);
+            Save(saveTag + GetName(new { pixelLightCount }), pixelLightCount);
+
             float shadowProjFloat = -1;
             if (shadowProjection == ShadowProjection.CloseFit)
             {
@@ -361,43 +363,26 @@ namespace QMoreOptions
             {
                 shadowProjFloat = 1;
             }
-            Save(saveTag + GetName (new { shadowProjection }),shadowProjFloat);
-        
-            Save(saveTag + GetName (new { shadowDistance = maxShadowDistance }),maxShadowDistance);
-            Save(saveTag + GetName (new { shadowCascade }),shadowCascade);
-            Save(saveTag + GetName (new { vSync }),vSync);
-            Save(saveTag + GetName (new { particleRaycastBudget }),particleRaycastBudget);
-            Save(saveTag + GetName (new { frameRate }),frameRate);
-            Save(saveTag + GetName (new { LoDLevel }),LoDLevel);
-            Save(saveTag + GetName (new { LoDBias }),LoDBias);
-            //Fog
-            Save(saveTag + GetName (new { m_fogHeight }),m_fogHeight);
-            Save(saveTag + GetName (new { m_edgeFogDistance }),m_edgeFogDistance);		
-            Save(saveTag + GetName (new { m_useVolumeFog }),1);
-            Save(saveTag + GetName (new { m_volumeFogDensity }),m_volumeFogDensity);
-            Save(saveTag + GetName (new { m_volumeFogStart }),m_volumeFogStart);
-            Save(saveTag + GetName (new { m_volumeFogDistance }),m_volumeFogDistance);
-            Save(saveTag + GetName (new { m_pollutionFogIntensity }),m_pollutionFogIntensity);
-            
-            EUtils.SetFieldValue(renderProperties,"m_fogHeight",m_fogHeight);
-            EUtils.SetFieldValue(renderProperties,"m_edgeFogDistance",m_edgeFogDistance);
-            EUtils.SetFieldValue(renderProperties,"m_useVolumeFog",m_useVolumeFog);
-            EUtils.SetFieldValue(renderProperties,"m_volumeFogDensity",m_volumeFogDensity);
-            EUtils.SetFieldValue(renderProperties,"m_volumeFogStart",m_volumeFogStart);
-            EUtils.SetFieldValue(renderProperties,"m_volumeFogDistance",m_volumeFogDistance);	
-            EUtils.SetFieldValue(renderProperties,"m_pollutionFogIntensity",m_pollutionFogIntensity);	
-            /* Fog */
+            Save(saveTag + GetName(new { shadowProjection }), shadowProjFloat);
+
+            Save(saveTag + GetName(new { shadowDistance = maxShadowDistance }), maxShadowDistance);
+            Save(saveTag + GetName(new { shadowCascade }), shadowCascade);
+            Save(saveTag + GetName(new { vSync }), vSync);
+            Save(saveTag + GetName(new { particleRaycastBudget }), particleRaycastBudget);
+            Save(saveTag + GetName(new { frameRate }), frameRate);
+            Save(saveTag + GetName(new { LoDLevel }), LoDLevel);
+            Save(saveTag + GetName(new { LoDBias }), LoDBias);
         }
         private void Save(string key, float value)
         {
-            if(qData != null)
-                qData.AddToValues(key,value);
+            if (qData != null)
+                qData.AddToValues(key, value);
             //PlayerPrefs.SetFloat(key, value);
         }
         private float Load(string key)
         {
             var value = qData.GetValueByKey(key);
-            if(!(value is float))
+            if (!(value is float))
                 return -1;
             else
                 return (float)value;
@@ -405,13 +390,13 @@ namespace QMoreOptions
 
         MonoBehaviour GetCameraBehaviour(string name)
         {
-            for( int i = 0; i < cameraBehaviours.Length; i++ )
+            for (int i = 0; i < cameraBehaviours.Length; i++)
             {
-                if(cameraBehaviours[i].GetType().Name == name)
+                if (cameraBehaviours[i].GetType().Name == name)
                 {
                     return cameraBehaviours[i];
                 }
-            
+
             }
             return null;
         }
@@ -419,16 +404,16 @@ namespace QMoreOptions
         {
             setFrameRate = true;
         }
-    
+
         // Update is called once per frame
-        void Update () 
+        void Update()
         {
             if (setFrameRate)
             {
                 lastFrameRate = (int)(1.0f / Time.deltaTime);
                 setFrameRate = false;
             }
-            if(Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.O)/*Input.GetKeyDown(KeyCode.Escape)*/)
+            if (Input.GetKey(KeyCode.LeftAlt) && Input.GetKeyDown(KeyCode.O)/*Input.GetKeyDown(KeyCode.Escape)*/)
             {
                 /*
             GameObject[] currentObjects = GameObject.FindObjectsOfType<GameObject>() as GameObject[];
@@ -456,7 +441,7 @@ namespace QMoreOptions
             }
             ChirpLog.Flush();
             */
-                activated = activated?false:true;
+                activated = activated ? false : true;
             }
         }
         private void OnGUI()
@@ -471,13 +456,13 @@ namespace QMoreOptions
             optionScrollPosition = GUI.BeginScrollView(new Rect(-5, 20, optionWindowRect.width, optionWindowRect.height - 30), optionScrollPosition, new Rect(0, 0, optionWindowRect.width - 20, maxYPosScroll));
             float yPos = 0;
             GUI.Label(new Rect(25, 0, sWidthHeight.x, sWidthHeight.y), string.Format("Fps:{0} refresh Fps rate: {1}", lastFrameRate, refreshRateMS));
-        
+
             if (GUI.Button(new Rect(sWidthHeight.x + 25, yPos, bWidthHeight.x, bWidthHeight.y), "Exit"))
             {
                 activated = false;
             }
             yPos = yPos + sWidthHeight.y;
-        
+
             //yPos = ResolutionGroup(0, yPos);
             yPos = RenderingGroup(0, yPos);
             yPos = ShadowGroup(0, yPos);
@@ -489,36 +474,36 @@ namespace QMoreOptions
                 activated = false;
             }
 
-            if(maxYPosScroll == 0)
+            if (maxYPosScroll == 0)
                 maxYPosScroll = yPos + 100;
 
             GUI.EndScrollView();
             GUI.DragWindow();
         }
-//    float ResolutionGroup(float xStart, float yStart)
-//    {
-//        float xPos = xStart + 25;
-//        float yPos = yStart + 25;
-//        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Resolutions", headingColor));
-//        yPos = yPos + sWidthHeight.y;
-//        fullScreen = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), fullScreen, "Full screen");
-//        yPos = yPos + sWidthHeight.y;
-//        float maxHeight = yPos + (Mathf.Floor(Screen.resolutions.Length / 3) * (sWidthHeight.y));
-//        Resolution[] resolutions = Screen.resolutions;
-//        for (int i = 0; i < resolutions.Length; i++)
-//        {
-//            float newXPos = xPos + (i % 3) * (bWidthHeight.x);
-//            float newYPos = yPos + (Mathf.Floor(i / 3) * (bWidthHeight.y));
-//            if (GUI.Button(new Rect(newXPos, newYPos, bWidthHeight.x, bWidthHeight.y), resolutions[i].width + "x" + resolutions[i].height + " " + resolutions[i].refreshRate))
-//            {
-//                Screen.SetResolution(resolutions[i].width, resolutions[i].height, fullScreen, resolutions[i].refreshRate);
-//                optionWindowRect.x = 0;
-//                optionWindowRect.y = 0;
-//            }
-//        }
-//        return maxHeight;
-//    }
-        float RenderingGroup(float xStart,float yStart)
+        //    float ResolutionGroup(float xStart, float yStart)
+        //    {
+        //        float xPos = xStart + 25;
+        //        float yPos = yStart + 25;
+        //        GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Resolutions", headingColor));
+        //        yPos = yPos + sWidthHeight.y;
+        //        fullScreen = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), fullScreen, "Full screen");
+        //        yPos = yPos + sWidthHeight.y;
+        //        float maxHeight = yPos + (Mathf.Floor(Screen.resolutions.Length / 3) * (sWidthHeight.y));
+        //        Resolution[] resolutions = Screen.resolutions;
+        //        for (int i = 0; i < resolutions.Length; i++)
+        //        {
+        //            float newXPos = xPos + (i % 3) * (bWidthHeight.x);
+        //            float newYPos = yPos + (Mathf.Floor(i / 3) * (bWidthHeight.y));
+        //            if (GUI.Button(new Rect(newXPos, newYPos, bWidthHeight.x, bWidthHeight.y), resolutions[i].width + "x" + resolutions[i].height + " " + resolutions[i].refreshRate))
+        //            {
+        //                Screen.SetResolution(resolutions[i].width, resolutions[i].height, fullScreen, resolutions[i].refreshRate);
+        //                optionWindowRect.x = 0;
+        //                optionWindowRect.y = 0;
+        //            }
+        //        }
+        //        return maxHeight;
+        //    }
+        float RenderingGroup(float xStart, float yStart)
         {
             float xPos = xStart + 25;
             float yPos = yStart + 25;
@@ -533,7 +518,7 @@ namespace QMoreOptions
                 if (antiAliasing == 1)
                     antiAliasing = 0;
                 QualitySettings.antiAliasing = (int)Mathf.ClosestPowerOfTwo((int)antiAliasing);
-                Save(saveTag + GetName (new { antiAliasing }),antiAliasing);
+                Save(saveTag + GetName(new { antiAliasing }), antiAliasing);
             }
             //End anti Analysing
             //Anisotropic Filtering
@@ -544,17 +529,17 @@ namespace QMoreOptions
             if (GUI.Button(new Rect(xPos, yPos, bWidthHeight.x, bWidthHeight.y), AnisotropicFiltering.Disable.ToString()))
             {
                 anisotropicFilt = AnisotropicFiltering.Disable;
-                Save(saveTag + GetName (new { anisotropicFilt }),0);
+                Save(saveTag + GetName(new { anisotropicFilt }), 0);
             }
             if (GUI.Button(new Rect(xPos + bWidthHeight.x, yPos, bWidthHeight.x, bWidthHeight.y), AnisotropicFiltering.Enable.ToString()))
             {
                 anisotropicFilt = AnisotropicFiltering.Enable;
-                Save(saveTag + GetName (new { anisotropicFilt }),1);
+                Save(saveTag + GetName(new { anisotropicFilt }), 1);
             }
             if (GUI.Button(new Rect(xPos + (bWidthHeight.x * 2), yPos, bWidthHeight.x, bWidthHeight.y), AnisotropicFiltering.ForceEnable.ToString()))
             {
                 anisotropicFilt = AnisotropicFiltering.ForceEnable;
-                Save(saveTag + GetName (new { anisotropicFilt }),2);
+                Save(saveTag + GetName(new { anisotropicFilt }), 2);
             }
             QualitySettings.anisotropicFiltering = anisotropicFilt;
             //End Anisotropic Filtering
@@ -564,7 +549,7 @@ namespace QMoreOptions
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Texture Quality(Beter to worse): " + QualitySettings.masterTextureLimit);
             textureQuality = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, 25), textureQuality, 0, maxTextureQuality);
             QualitySettings.masterTextureLimit = (int)textureQuality;
-            Save(saveTag + GetName (new { textureQuality }),textureQuality);
+            Save(saveTag + GetName(new { textureQuality }), textureQuality);
             //End Texture Quality
 
             //Pixel Light Count
@@ -572,7 +557,7 @@ namespace QMoreOptions
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Pixel Light Count: " + QualitySettings.pixelLightCount);
             pixelLightCount = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), pixelLightCount, 0, maxPixelLightCount);
             QualitySettings.pixelLightCount = (int)pixelLightCount;
-            Save(saveTag + GetName (new { pixelLightCount }),pixelLightCount);
+            Save(saveTag + GetName(new { pixelLightCount }), pixelLightCount);
             //End Pixel Light Count
             return yPos;
         }
@@ -581,19 +566,19 @@ namespace QMoreOptions
             float xPos = xStart + 25;
             float yPos = yStart + 25;
 
-            GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y),  EUtils.UnityColoredText("Shadow",headingColor));
+            GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Shadow", headingColor));
             yPos = yPos + sWidthHeight.y;
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Shadow Projection: " + QualitySettings.shadowProjection.ToString());
             yPos = yPos + sWidthHeight.y;
             if (GUI.Button(new Rect(xPos, yPos, bWidthHeight.x, bWidthHeight.y), ShadowProjection.CloseFit.ToString()))
             {
                 shadowProjection = ShadowProjection.CloseFit;
-                Save(saveTag + GetName (new { shadowProjection }),0);
+                Save(saveTag + GetName(new { shadowProjection }), 0);
             }
             if (GUI.Button(new Rect(xPos + bWidthHeight.x, yPos, bWidthHeight.x, bWidthHeight.y), ShadowProjection.StableFit.ToString()))
             {
                 shadowProjection = ShadowProjection.StableFit;
-                Save(saveTag + GetName (new { shadowProjection }),1);
+                Save(saveTag + GetName(new { shadowProjection }), 1);
             }
             QualitySettings.shadowProjection = shadowProjection;
             yPos = yPos + bWidthHeight.y;
@@ -602,13 +587,13 @@ namespace QMoreOptions
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Max Shadow Distance: " + cameraController.m_maxShadowDistance);
             maxShadowDistance = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), maxShadowDistance, 0, shadowDistanceLimit);
             cameraController.m_maxShadowDistance = maxShadowDistance;
-            Save(saveTag + GetName (new { shadowDistance = maxShadowDistance }),maxShadowDistance);
+            Save(saveTag + GetName(new { shadowDistance = maxShadowDistance }), maxShadowDistance);
             yPos = yPos + sWidthHeight.y;
-        
+
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Shadow Cascade: " + QualitySettings.shadowCascades);
             shadowCascade = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), shadowCascade, 0, maxShadowCascade);
             shadowCascade = (int)Mathf.ClosestPowerOfTwo((int)shadowCascade);
-            Save(saveTag + GetName (new { shadowCascade }),shadowCascade);
+            Save(saveTag + GetName(new { shadowCascade }), shadowCascade);
             if (shadowCascade == 1)
                 shadowCascade = 0;
             QualitySettings.shadowCascades = (int)Mathf.ClosestPowerOfTwo((int)shadowCascade);
@@ -620,13 +605,13 @@ namespace QMoreOptions
             float xPos = xStart + 25;
             float yPos = yStart + 25;
 
-            GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y),  EUtils.UnityColoredText("Other",headingColor));
+            GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Other", headingColor));
             yPos = yPos + sWidthHeight.y;
             //vSync
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "vSync: " + QualitySettings.vSyncCount);
             vSync = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), vSync, 0, maxvSync);
             QualitySettings.vSyncCount = (int)vSync;
-            Save(saveTag + GetName (new { vSync }),vSync);
+            Save(saveTag + GetName(new { vSync }), vSync);
             yPos = yPos + sWidthHeight.y;
             //End vSync
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x + 100, sWidthHeight.y), "Limit frame rate only works when vSync is disabled(0)");
@@ -634,30 +619,30 @@ namespace QMoreOptions
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Frame rate (0 = unlimited): " + Application.targetFrameRate);
             frameRate = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), frameRate, 0, maxFrameRate);
             Application.targetFrameRate = (int)frameRate;
-            Save(saveTag + GetName (new { frameRate }),frameRate);
+            Save(saveTag + GetName(new { frameRate }), frameRate);
             yPos = yPos + sWidthHeight.y;
             //LoD Stuff
             LoDLevel = QualitySettings.maximumLODLevel;
             LoDBias = QualitySettings.lodBias;
-        
+
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Maximum LoD Level: " + QualitySettings.maximumLODLevel);
             LoDLevel = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), LoDLevel, 0, LoDLevelMax);
             QualitySettings.maximumLODLevel = (int)LoDLevel;
-            Save(saveTag + GetName (new { LoDLevel }),LoDLevel);
+            Save(saveTag + GetName(new { LoDLevel }), LoDLevel);
             yPos = yPos + sWidthHeight.y;
-        
+
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "LoD Bias: " + QualitySettings.lodBias);
             LoDBias = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), LoDBias, 0, LoDBiasMax);
             QualitySettings.lodBias = (int)LoDBias;
-            Save(saveTag + GetName (new { LoDBias }),LoDBias);
+            Save(saveTag + GetName(new { LoDBias }), LoDBias);
             yPos = yPos + sWidthHeight.y;
-        
+
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Particle Raycast Budget: " + QualitySettings.particleRaycastBudget);
             particleRaycastBudget = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), particleRaycastBudget, 0, maxParticleRaycastBudget);
             particleRaycastBudget = (int)Mathf.ClosestPowerOfTwo((int)particleRaycastBudget);
             if (particleRaycastBudget < 4)
                 particleRaycastBudget = 4;
-            Save(saveTag + GetName (new { particleRaycastBudget }),particleRaycastBudget);
+            Save(saveTag + GetName(new { particleRaycastBudget }), particleRaycastBudget);
             QualitySettings.particleRaycastBudget = (int)Mathf.ClosestPowerOfTwo((int)particleRaycastBudget);
             return yPos;
         }
@@ -667,8 +652,8 @@ namespace QMoreOptions
             float yPos = yStart + 25;
             GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), EUtils.UnityColoredText("Extra Options", headingColor));
             yPos = yPos + sWidthHeight.y;
-        
-            if(GetCameraBehaviour("FogEffect") != null)
+
+            if (GetCameraBehaviour("FogEffect") != null)
             {
                 GetCameraBehaviour("FogEffect").enabled = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), GetCameraBehaviour("FogEffect").enabled, "Fog Effect GameObject");
                 yPos = yPos + sWidthHeight.y;
@@ -698,80 +683,74 @@ namespace QMoreOptions
             EUtils.SetFieldValue(GetCameraBehaviour("FogEffect"),"m_3DNoiseScale",m_3DNoiseScale);
             yPos = yPos + sWidthHeight.y;
             */
-            
-            }
-            //renderProperties
-            if(renderProperties != null)
-            {
-                //Fog
-                m_useVolumeFog = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), (bool) EUtils.GetFieldValue(renderProperties,"m_useVolumeFog"), "Use Volume Fog");
-                EUtils.SetFieldValue(renderProperties,"m_useVolumeFog",m_useVolumeFog);			
-                if(m_useVolumeFog)
-                    Save(saveTag + GetName (new { m_useVolumeFog }),1);
-                else
-                    Save(saveTag + GetName (new { m_useVolumeFog }),0);
-                yPos = yPos + sWidthHeight.y;
-                
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Fog Height: " + EUtils.GetFieldValue(renderProperties,"m_fogHeight"));
-                m_fogHeight = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_fogHeight, 0, m_fogHeightMax);
-                EUtils.SetFieldValue(renderProperties,"m_fogHeight",m_fogHeight);
-                Save(saveTag + GetName (new { m_fogHeight }),m_fogHeight);
-                yPos = yPos + sWidthHeight.y;
-            
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Edge Fog Distance: " + EUtils.GetFieldValue(renderProperties,"m_edgeFogDistance"));
-                m_edgeFogDistance = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_edgeFogDistance, 0, m_edgeFogDistanceMax);
-                EUtils.SetFieldValue(renderProperties,"m_edgeFogDistance",m_edgeFogDistance);
-                Save(saveTag + GetName (new { m_volumeFogStart }),m_edgeFogDistance);
-                yPos = yPos + sWidthHeight.y;
 
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Volume Fog Density: " + EUtils.GetFieldValue(renderProperties,"m_volumeFogDensity"));
-                m_volumeFogDensity = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_volumeFogDensity, 0, m_volumeFogDensityMax);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogDensity",m_volumeFogDensity);
-                Save(saveTag + GetName (new { m_volumeFogStart }),m_volumeFogDensity);
+            }
+
+            if (GetCameraBehaviour("DayNightFogEffect") != null)
+            {
+                GetCameraBehaviour("DayNightFogEffect").enabled =
+                    GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y),
+                        GetCameraBehaviour("DayNightFogEffect").enabled, "Day Night Fog Effect GameObject");
                 yPos = yPos + sWidthHeight.y;
-            
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Volume Fog Start: " + EUtils.GetFieldValue(renderProperties,"m_volumeFogStart"));
-                m_volumeFogStart = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_volumeFogStart, 0, m_volumeFogStartMax);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogStart",m_volumeFogStart);
-                Save(saveTag + GetName (new { m_volumeFogStart }),m_volumeFogStart);
-                yPos = yPos + sWidthHeight.y;
-            
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Volume Fog Distance: " + EUtils.GetFieldValue(renderProperties,"m_volumeFogDistance"));
-                m_volumeFogDistance = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_volumeFogDistance, 0, m_volumeFogDistanceMax);
-                EUtils.SetFieldValue(renderProperties,"m_volumeFogDistance",m_volumeFogDistance);
-                Save(saveTag + GetName (new { m_volumeFogDistance }),m_volumeFogDistance);
-                yPos = yPos + sWidthHeight.y;
-            
-            
-                GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), "Pollution Fog Intensity: " + EUtils.GetFieldValue(renderProperties,"m_pollutionFogIntensity"));
-                m_pollutionFogIntensity = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), m_pollutionFogIntensity, 0, m_pollutionFogIntensityMax);
-                EUtils.SetFieldValue(renderProperties,"m_pollutionFogIntensity",m_pollutionFogIntensity);
-                Save(saveTag + GetName (new { m_pollutionFogIntensity }),m_pollutionFogIntensity);
-                yPos = yPos + sWidthHeight.y;
-            
-                if (GUI.Button(new Rect(xPos, yPos, bWidthHeight.x *2, bWidthHeight.y), "Reset Fog Settings"))
+            }
+
+            if (renderProperties != null)
+            {
+                ToggleGroup("Use Volume Fog", xPos, ref yPos, renderProperties.m_useVolumeFog,
+                    ref Configuration.instance.fogClassic.useVolumeFog, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Fog Height", xPos, ref yPos, renderProperties.m_fogHeight,
+                    FogClassicConstants.FogHeightMin, FogClassicConstants.FogHeightMax,
+                    ref Configuration.instance.fogClassic.fogHeight, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Edge Fog Distance", xPos, ref yPos, renderProperties.m_edgeFogDistance,
+                    FogClassicConstants.EdgeFogDistanceMin, FogClassicConstants.EdgeFogDistanceMax,
+                    ref Configuration.instance.fogClassic.edgeFogDistance, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Volume Fog Density", xPos, ref yPos, renderProperties.m_volumeFogDensity,
+                    FogClassicConstants.VolumeFogDensityMin, FogClassicConstants.VolumeFogDensityMax,
+                    ref Configuration.instance.fogClassic.volumeFogDensity, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Volume Fog Start", xPos, ref yPos, renderProperties.m_volumeFogStart,
+                    FogClassicConstants.VolumeFogStartMin, FogClassicConstants.VolumeFogStartMax,
+                    ref Configuration.instance.fogClassic.volumeFogStart, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Volume Fog Distance", xPos, ref yPos, renderProperties.m_volumeFogDistance,
+                    FogClassicConstants.VolumeFogDistanceMin, FogClassicConstants.VolumeFogDistanceMax,
+                    ref Configuration.instance.fogClassic.volumeFogDistance, ref Configuration.instance.isFogClassicDirty);
+
+                HorizontalSliderGroup("Pollution Fog Intensity", xPos, ref yPos, renderProperties.m_pollutionFogIntensity,
+                    FogClassicConstants.PollutionFogIntensityMin, FogClassicConstants.PollutionFogIntensityMax,
+                    ref Configuration.instance.fogClassic.pollutionFogIntensity, ref Configuration.instance.isFogClassicDirty);
+
+                if (Configuration.instance.isFogClassicDirty)
+                {
+                    SetFogClassicOptions();
+                }
+
+                if (GUI.Button(new Rect(xPos, yPos, bWidthHeight.x * 2, bWidthHeight.y), "Reset Fog Settings"))
                 {
                     ResetToDefault();
                 }
                 yPos = yPos + sWidthHeight.y;
             }
-        
-            if(GetCameraBehaviour("Bloom") != null)
-            {		
+
+            if (GetCameraBehaviour("Bloom") != null)
+            {
                 GetCameraBehaviour("Bloom").enabled = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), GetCameraBehaviour("Bloom").enabled, "Bloom");
                 yPos = yPos + sWidthHeight.y;
             }
-            if(GetCameraBehaviour("ToneMapping") != null)
-            {		
+            if (GetCameraBehaviour("ToneMapping") != null)
+            {
                 GetCameraBehaviour("ToneMapping").enabled = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), GetCameraBehaviour("ToneMapping").enabled, "Tone Mapping");
                 yPos = yPos + sWidthHeight.y;
             }
-            if(GetCameraBehaviour("ColorCorrectionLut") != null)
-            {		
+            if (GetCameraBehaviour("ColorCorrectionLut") != null)
+            {
                 GetCameraBehaviour("ColorCorrectionLut").enabled = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), GetCameraBehaviour("ColorCorrectionLut").enabled, "Color Correction Lut");
                 yPos = yPos + sWidthHeight.y;
             }
-            if(GetCameraBehaviour("OverLayEffect") != null)
+            if (GetCameraBehaviour("OverLayEffect") != null)
             {
                 GetCameraBehaviour("OverLayEffect").enabled = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), GetCameraBehaviour("OverLayEffect").enabled, "Over Lay Effect");
                 yPos = yPos + sWidthHeight.y;
@@ -802,16 +781,43 @@ namespace QMoreOptions
             //End
             return yPos;
         }
+
+        private void ToggleGroup(string labelText, float xPos, ref float yPos, bool readValue,
+            ref bool configurationValue, ref bool configurationDirty)
+        {
+            var newValue = GUI.Toggle(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), readValue, labelText);
+            if (newValue != configurationValue)
+            {
+                configurationValue = newValue;
+                configurationDirty = true;
+            }
+            yPos = yPos + sWidthHeight.y;
+        }
+
+
+        private void HorizontalSliderGroup(string labeltext, float xPos, ref float yPos, float readValue, float min, float max,
+            ref float configurationValue, ref bool configurationDirty)
+        {
+            GUI.Label(new Rect(xPos, yPos, sWidthHeight.x, sWidthHeight.y), $"{labeltext}: {readValue}");
+            var newValue = GUI.HorizontalSlider(new Rect(xPos + sWidthHeight.x, yPos, sWidthHeight.x, sWidthHeight.y), readValue, min, max);
+            if (Math.Abs(configurationValue - newValue) > 0.0f)
+            {
+                configurationValue = newValue;
+                configurationDirty = true;
+            }
+            yPos = yPos + sWidthHeight.y;
+        }
+
         public void Destroy()
         {
             frameUpdateTimer.Elapsed -= new ElapsedEventHandler(frameUpdateTimer_Elapsed);
             frameUpdateTimer.Dispose();
             frameUpdateTimer = null;
-        
+
             QSaver qSaver = new QSaver();
             qSaver.QSaverSave(filePath, qData);
-        
-            if(this.gameObject != null);
+
+            if (this.gameObject != null) ;
             Destroy(this.gameObject);
         }
         private void OnApplicationQuit()
@@ -819,7 +825,7 @@ namespace QMoreOptions
             frameUpdateTimer.Elapsed -= new ElapsedEventHandler(frameUpdateTimer_Elapsed);
             frameUpdateTimer.Dispose();
             frameUpdateTimer = null;
-        
+
             QSaver qSaver = new QSaver();
             qSaver.QSaverSave(filePath, qData);
         }
