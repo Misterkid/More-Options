@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+
 /* 
  * Author: Eduard Meivogel
  * Website: https://www.facebook.com/EddyMeivogelProjects
@@ -8,7 +7,7 @@ using System.Collections.Generic;
  * If you are improving or use this code please leave my name in here and add your own :) 
  *
  */
-namespace QugetFileSystem
+namespace QMoreOptions.QugetFileSystem
 {
     public class QData
     {

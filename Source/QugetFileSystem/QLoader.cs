@@ -1,9 +1,8 @@
 ﻿using System;
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.IO;
+using System.Text.RegularExpressions;
+using UnityEngine;
+
 /* 
  * Author: Eduard Meivogel
  * Website: https://www.facebook.com/EddyMeivogelProjects
@@ -13,7 +12,7 @@ using System.IO;
  */
 //What are Regular Expressions? Time to learn They can make my life easier
 //http://www.zytrax.com/tech/web/regex.htm
-namespace QugetFileSystem
+namespace QMoreOptions.QugetFileSystem
 {
     public class QLoader
     {

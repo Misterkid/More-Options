@@ -39,23 +39,24 @@
     <Reference Include="UnityEngine" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Source\ChirpLogger\ChirpLogger.cs" />
-    <Compile Include="Source\ChirpLogger\ChirpLogger.Internal\Chirp.cs" />
-    <Compile Include="Source\EUtils.cs" />
-    <Compile Include="Source\OptionsWindow.cs" />
+    <Compile Include="ChirpLogger\ChirpLogger.cs" />
+    <Compile Include="ChirpLogger\ChirpLogger.Internal\Chirp.cs" />
+    <Compile Include="EUtils.cs" />
+    <Compile Include="LoadingExtension.cs" />
+    <Compile Include="OptionsWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Source\QugetFileSystem\QData.cs" />
-    <Compile Include="Source\QugetFileSystem\QLoader.cs" />
-    <Compile Include="Source\QugetFileSystem\QSaver.cs" />
-    <Compile Include="Source\QugetMoreOptions.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\CreaseShading.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\EdgeDetection.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\ImageEffectBase.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\ImageEffects.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\PostEffectsBase.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\PostEffectsHelper.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\ScreenSpaceAmbientObscurance.cs" />
-    <Compile Include="Source\UnityStandardAssets.ImageEffects\ScreenSpaceAmbientOcclusion.cs" />
+    <Compile Include="QugetFileSystem\QData.cs" />
+    <Compile Include="QugetFileSystem\QLoader.cs" />
+    <Compile Include="QugetFileSystem\QSaver.cs" />
+    <Compile Include="Mod.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\CreaseShading.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\EdgeDetection.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\ImageEffectBase.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\ImageEffects.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\PostEffectsBase.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\PostEffectsHelper.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\ScreenSpaceAmbientObscurance.cs" />
+    <Compile Include="UnityStandardAssets.ImageEffects\ScreenSpaceAmbientOcclusion.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

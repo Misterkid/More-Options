@@ -6,7 +6,7 @@
 
 using System;
 
-namespace ChirpLogger.Internal
+namespace QMoreOptions.ChirpLogger.ChirpLogger.Internal
 {
 
   public enum ChirpType { Debug, Info, Warning, Error }

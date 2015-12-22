@@ -7,14 +7,11 @@
 // ------------------------------------------------------------------------------------------------------
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using QMoreOptions.ChirpLogger.ChirpLogger.Internal;
 
-using ChirpLogger.Internal;
-
-
-namespace ChirpLogger
+namespace QMoreOptions.ChirpLogger
 {
   public class ChirpLog
   {
